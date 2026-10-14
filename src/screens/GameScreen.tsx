@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
   Pressable,
@@ -9,19 +9,21 @@ import {
   View,
 } from 'react-native';
 
+import { isRewardedSupported, showRewardedAd } from '../ads/rewarded';
 import { Board } from '../components/Board';
 import { NumberPad } from '../components/NumberPad';
 import { ResultModal } from '../components/ResultModal';
 import { Toolbar } from '../components/Toolbar';
 import { LEVEL_COUNT, parseLevelId } from '../core/levels';
 import { DIFFICULTY_LABEL } from '../core/types';
-import { digitCounts, hintsLeft } from '../store/gameLogic';
+import { canEarnBonusHint, digitCounts, hintLimit, hintsLeft } from '../store/gameLogic';
 import { useGameStore } from '../store/gameStore';
-import { MAX_HINTS, MAX_MISTAKES } from '../store/settings';
+import { MAX_MISTAKES } from '../store/settings';
 import { useProfileStore } from '../store/profileStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useStatsStore } from '../store/statsStore';
 import { useTheme, type Theme } from '../theme';
+import { showInfo } from '../utils/dialog';
 import { formatTime } from '../utils/format';
 import type { ScreenProps } from './types';
 
@@ -43,8 +45,10 @@ export function GameScreen({ navigate, goBack }: ScreenProps) {
   const level = game?.levelId ? parseLevelId(game.levelId) : null;
 
   const [paused, setPaused] = useState(false);
+  const [adLoading, setAdLoading] = useState(false);
   const [appActive, setAppActive] = useState(AppState.currentState === 'active');
   const playing = game?.status === 'playing';
+  const adShowingRef = useRef(false);
   /** Màn xếp hạng: đồng hồ chạy theo thời gian thực (giống máy chủ), tạm dừng không dừng giờ */
   const startedAtMs = game?.levelId ? game.startedAtMs : undefined;
 
@@ -53,7 +57,7 @@ export function GameScreen({ navigate, goBack }: ScreenProps) {
     const sub = AppState.addEventListener('change', (state) => {
       const active = state === 'active';
       setAppActive(active);
-      if (!active) setPaused(true);
+      if (!active && !adShowingRef.current) setPaused(true);
     });
     return () => sub.remove();
   }, []);
@@ -68,10 +72,25 @@ export function GameScreen({ navigate, goBack }: ScreenProps) {
       const id = setInterval(sync, 1000);
       return () => clearInterval(id);
     }
-    if (paused || !appActive) return;
+    if (paused || !appActive || adLoading) return;
     const id = setInterval(() => dispatch({ type: 'tick', seconds: 1 }), 1000);
     return () => clearInterval(id);
-  }, [playing, paused, appActive, startedAtMs, dispatch]);
+  }, [playing, paused, appActive, adLoading, startedAtMs, dispatch]);
+
+  /** Xem quảng cáo có thưởng → +1 gợi ý (chỉ ván ngẫu nhiên / thử thách ngày) */
+  const watchAdForHint = async () => {
+    if (adLoading) return;
+    setAdLoading(true);
+    adShowingRef.current = true;
+    try {
+      const earned = await showRewardedAd();
+      if (earned) dispatch({ type: 'grantBonusHint' });
+      else showInfo('Chưa có quảng cáo', 'Không tải được quảng cáo hoặc bạn đã đóng trước khi xem xong. Thử lại sau nhé!');
+    } finally {
+      adShowingRef.current = false;
+      setAdLoading(false);
+    }
+  };
 
   const counts = useMemo(() => (game ? digitCounts(game) : []), [game]);
 
@@ -121,7 +140,7 @@ export function GameScreen({ navigate, goBack }: ScreenProps) {
             ? `Lỗi: ${game.mistakes}${settings.mistakeLimit ? `/${MAX_MISTAKES}` : ''}`
             : ' '}
         </Text>
-        <Text style={{ color: t.textMuted }}>Gợi ý: {game.hintsUsed}/{MAX_HINTS}</Text>
+        <Text style={{ color: t.textMuted }}>Gợi ý: {game.hintsUsed}/{hintLimit(game)}</Text>
         <Text style={{ color: t.textMuted, fontVariant: ['tabular-nums'] }}>
           {settings.showTimer ? formatTime(game.elapsed) : ' '}
         </Text>
@@ -159,6 +178,11 @@ export function GameScreen({ navigate, goBack }: ScreenProps) {
           onErase={() => dispatch({ type: 'erase' })}
           onToggleNotes={() => dispatch({ type: 'toggleNoteMode' })}
           onHint={() => dispatch({ type: 'hint' })}
+          adHint={
+            isRewardedSupported() && canEarnBonusHint(game)
+              ? { loading: adLoading, onPress: () => void watchAdForHint() }
+              : null
+          }
         />
         <NumberPad
           counts={counts}

@@ -4,7 +4,7 @@
  */
 import { BOXES, COLS, PEERS, ROWS, boxOf, colOf, rowOf } from '../core/grid';
 import type { Difficulty, Grid, Puzzle } from '../core/types';
-import { MAX_HINTS, MAX_MISTAKES, type Settings } from './settings';
+import { MAX_AD_HINTS, MAX_HINTS, MAX_MISTAKES, type Settings } from './settings';
 
 export type GameStatus = 'playing' | 'won' | 'lost';
 export type GameMode = 'classic' | 'daily' | 'level';
@@ -33,6 +33,8 @@ export interface GameState {
   noteMode: boolean;
   mistakes: number;
   hintsUsed: number;
+  /** Gợi ý thưởng nhận được nhờ xem quảng cáo (ván cũ đã lưu có thể thiếu → coi là 0) */
+  bonusHints?: number;
   history: Snapshot[];
   elapsed: number; // giây
   status: GameStatus;
@@ -49,6 +51,8 @@ export type GameAction =
   | { type: 'toggleNoteMode' }
   | { type: 'undo' }
   | { type: 'hint' }
+  /** Cộng 1 gợi ý sau khi xem xong quảng cáo có thưởng */
+  | { type: 'grantBonusHint' }
   | { type: 'tick'; seconds: number }
   /** Đặt thời gian tuyệt đối (màn xếp hạng: tính từ startedAtMs) */
   | { type: 'sync'; elapsed: number };
@@ -76,6 +80,7 @@ export function createGame(
     noteMode: false,
     mistakes: 0,
     hintsUsed: 0,
+    bonusHints: 0,
     history: [],
     elapsed: 0,
     status: 'playing',
@@ -214,8 +219,12 @@ export function gameReducer(s: GameState, a: GameAction, opts: LogicOptions): Ga
       return { ...s, board, notes, history: pushHistory(s) };
     }
 
+    case 'grantBonusHint':
+      if (!canEarnBonusHint(s)) return s;
+      return { ...s, bonusHints: (s.bonusHints ?? 0) + 1 };
+
     case 'hint': {
-      if (s.status !== 'playing' || s.hintsUsed >= MAX_HINTS) return s;
+      if (s.status !== 'playing' || s.hintsUsed >= hintLimit(s)) return s;
       const wrongOrEmpty = (i: number) => s.board[i] !== s.solution[i];
       let target = s.selected !== null && wrongOrEmpty(s.selected) ? s.selected : -1;
       if (target === -1) target = s.board.findIndex((_, i) => wrongOrEmpty(i));
@@ -275,7 +284,21 @@ export function computeCellViews(
 }
 
 /** Số gợi ý còn lại trong ván. */
-export const hintsLeft = (s: GameState): number => Math.max(0, MAX_HINTS - s.hintsUsed);
+/** Tổng số gợi ý được dùng trong ván (3 + gợi ý thưởng). */
+export const hintLimit = (s: GameState): number => MAX_HINTS + (s.bonusHints ?? 0);
+
+export const hintsLeft = (s: GameState): number => Math.max(0, hintLimit(s) - s.hintsUsed);
+
+/**
+ * Được xem quảng cáo để nhận thêm gợi ý không:
+ * chỉ ván ngẫu nhiên / thử thách hằng ngày (màn xếp hạng giữ tối đa 3 để công bằng),
+ * đang chơi, đã hết gợi ý, chưa nhận đủ MAX_AD_HINTS.
+ */
+export const canEarnBonusHint = (s: GameState): boolean =>
+  s.status === 'playing' &&
+  s.mode !== 'level' &&
+  hintsLeft(s) === 0 &&
+  (s.bonusHints ?? 0) < MAX_AD_HINTS;
 
 /** Số lần mỗi chữ số đã được điền đúng (index 1..9) – để ẩn số đã đủ 9. */
 export function digitCounts(s: GameState): number[] {

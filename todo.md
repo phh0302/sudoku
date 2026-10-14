@@ -103,6 +103,13 @@
 - [ ] Chơi thử trên điện thoại: đặt tên → giải 1 màn → xem bảng xếp hạng
 - [x] Chống gian lận: máy chủ giữ lời giải, cấp vé khi bắt đầu, kiểm tra bàn cờ + tự tính giờ (`supabase/anticheat.sql`)
 
+## Giai đoạn 8 – Quảng cáo có thưởng (AdMob)
+- [x] Xem QC → +1 gợi ý (tối đa +3/ván), chỉ ván ngẫu nhiên + thử thách ngày; màn xếp hạng giữ 3 gợi ý
+- [x] Đang dùng quảng cáo THỬ của Google; tự ẩn trên web và Expo Go (xem `ADS.md`)
+- [ ] Build development build: `eas build --profile development -p android`, cài lên máy, chạy `start-dev.bat`
+- [ ] Tạo tài khoản AdMob, thay App ID + mã Rewarded thật khi phát hành
+- [ ] Cập nhật PRIVACY.md (có quảng cáo), khai báo trên store
+
 ## Sau phát hành
 - [ ] Thu thập phản hồi người dùng
 - [ ] Cập nhật OTA bằng `eas update` cho thay đổi JS

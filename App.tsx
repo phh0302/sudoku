@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { ActivityIndicator, BackHandler, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import { initAds } from './src/ads/rewarded';
 import { GameScreen } from './src/screens/GameScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
@@ -39,6 +40,11 @@ function Root() {
   }, []);
   const goBack = useCallback(() => {
     setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
+  }, []);
+
+  // Khởi tạo quảng cáo (chỉ bản build native, không chạy trên web/Expo Go)
+  useEffect(() => {
+    initAds();
   }, []);
 
   // Gửi lại kết quả còn chờ khi mở app

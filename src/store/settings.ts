@@ -32,3 +32,6 @@ export const MAX_MISTAKES = 3;
 
 /** Số gợi ý tối đa mỗi ván */
 export const MAX_HINTS = 3;
+
+/** Số gợi ý thưởng tối đa nhận thêm mỗi ván bằng cách xem quảng cáo (không áp dụng màn xếp hạng) */
+export const MAX_AD_HINTS = 3;

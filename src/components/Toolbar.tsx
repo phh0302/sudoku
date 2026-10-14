@@ -15,6 +15,8 @@ interface Props {
   onErase: () => void;
   onToggleNotes: () => void;
   onHint: () => void;
+  /** Hết gợi ý nhưng có thể xem quảng cáo để nhận thêm 1 */
+  adHint?: { loading: boolean; onPress: () => void } | null;
 }
 
 export function Toolbar(p: Props) {
@@ -33,14 +35,26 @@ export function Toolbar(p: Props) {
         active={p.noteMode}
         badge={p.noteMode ? 'BẬT' : 'TẮT'}
       />
-      <Tool
-        t={t}
-        icon="bulb-outline"
-        label="Gợi ý"
-        onPress={p.onHint}
-        enabled={!off && p.hintsLeft > 0}
-        badge={String(p.hintsLeft)}
-      />
+      {p.adHint && p.hintsLeft === 0 ? (
+        <Tool
+          t={t}
+          icon={p.adHint.loading ? 'hourglass-outline' : 'play-circle-outline'}
+          label={p.adHint.loading ? 'Đang tải…' : 'Xem QC'}
+          onPress={p.adHint.onPress}
+          enabled={!off && !p.adHint.loading}
+          active
+          badge="+1"
+        />
+      ) : (
+        <Tool
+          t={t}
+          icon="bulb-outline"
+          label="Gợi ý"
+          onPress={p.onHint}
+          enabled={!off && p.hintsLeft > 0}
+          badge={String(p.hintsLeft)}
+        />
+      )}
     </View>
   );
 }

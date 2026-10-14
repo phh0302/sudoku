@@ -6,6 +6,7 @@ import {
   digitCounts,
   gameReducer,
   hintsLeft,
+  canEarnBonusHint,
   type GameAction,
   type GameState,
   type LogicOptions,
@@ -138,6 +139,37 @@ describe('màn xếp hạng', () => {
     expect(s.elapsed).toBe(125);
     expect(run({ ...s, status: 'won' }, [{ type: 'sync', elapsed: 999 }]).elapsed).toBe(125);
     expect(newGame().startedAtMs).toBeUndefined();
+  });
+});
+
+describe('gợi ý thưởng (xem quảng cáo)', () => {
+  const applyHint = (s: GameState) => run(s, [{ type: 'select', index: 0 }, { type: 'hint' }]);
+  it('chỉ nhận khi đã hết gợi ý, tối đa thêm 3, mỗi lần +1', () => {
+    let s = newGame();
+    expect(canEarnBonusHint(s)).toBe(false); // còn gợi ý
+    expect(run(s, [{ type: 'grantBonusHint' }])).toBe(s);
+    for (let k = 0; k < 3; k++) s = applyHint(s);
+    expect(hintsLeft(s)).toBe(0);
+    for (let k = 0; k < 3; k++) {
+      expect(canEarnBonusHint(s)).toBe(true);
+      s = run(s, [{ type: 'grantBonusHint' }]);
+      expect(hintsLeft(s)).toBe(1);
+      s = applyHint(s);
+      expect(hintsLeft(s)).toBe(0);
+    }
+    expect(s.hintsUsed).toBe(6);
+    expect(canEarnBonusHint(s)).toBe(false); // đã nhận đủ 3
+    expect(run(s, [{ type: 'grantBonusHint' }])).toBe(s);
+  });
+  it('màn xếp hạng không được nhận gợi ý thưởng', () => {
+    let s = createGame({ puzzle: PUZZLE, solution: SOLUTION, difficulty: 'easy' }, { mode: 'level', levelId: 'easy-1' });
+    for (let k = 0; k < 3; k++) s = applyHint(s);
+    expect(canEarnBonusHint(s)).toBe(false);
+    expect(run(s, [{ type: 'grantBonusHint' }]).bonusHints).toBe(0);
+  });
+  it('ván cũ đã lưu (thiếu bonusHints) vẫn tính đúng', () => {
+    const old = { ...newGame(), bonusHints: undefined };
+    expect(hintsLeft(old)).toBe(3);
   });
 });
 
