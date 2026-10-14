@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { NameModal } from '../components/NameModal';
 import { isOnlineConfigured } from '../online/supabase';
@@ -10,6 +10,7 @@ import type { Settings, ThemeMode } from '../store/settings';
 import { useSettingsStore } from '../store/settingsStore';
 import { useStatsStore } from '../store/statsStore';
 import { useTheme } from '../theme';
+import { confirmAction } from '../utils/dialog';
 import type { ScreenProps } from './types';
 
 type BoolKey = {
@@ -42,10 +43,12 @@ export function SettingsScreen({ goBack }: ScreenProps) {
   const [editingName, setEditingName] = useState(false);
 
   const confirmReset = () =>
-    Alert.alert('Xóa thống kê?', 'Toàn bộ số liệu thống kê sẽ bị xóa và không thể khôi phục.', [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Xóa', style: 'destructive', onPress: resetStats },
-    ]);
+    confirmAction(
+      'Xóa thống kê?',
+      'Toàn bộ số liệu thống kê sẽ bị xóa và không thể khôi phục.',
+      'Xóa',
+      resetStats,
+    );
 
   return (
     <View style={{ flex: 1 }}>

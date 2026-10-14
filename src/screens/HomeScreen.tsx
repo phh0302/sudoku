@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState, type ComponentProps } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../components/Button';
 import { NameModal } from '../components/NameModal';
@@ -12,10 +12,14 @@ import { useGameStore } from '../store/gameStore';
 import { useProfileStore } from '../store/profileStore';
 import { useStatsStore } from '../store/statsStore';
 import { useTheme } from '../theme';
+import { showInfo } from '../utils/dialog';
 import { formatTime } from '../utils/format';
 import type { ScreenProps } from './types';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
+
+/** Đã hỏi tên trong lần mở app này chưa (bấm "Để sau" thì không hỏi lại cho tới lần mở app sau) */
+let namePromptShown = false;
 
 export function HomeScreen({ navigate }: ScreenProps) {
   const t = useTheme();
@@ -25,7 +29,17 @@ export function HomeScreen({ navigate }: ScreenProps) {
   const levelBest = useStatsStore((s) => s.levelBest);
   const name = useProfileStore((s) => s.name);
   const setName = useProfileStore((s) => s.setName);
-  const [askName, setAskName] = useState(isOnlineConfigured && !name);
+  const [askName, setAskName] = useState(false);
+
+  // Hỏi tên 1 lần mỗi lần mở app (mở sau khi màn hình đã hiện – tránh lỗi hộp thoại không hiện trên web)
+  useEffect(() => {
+    if (namePromptShown || !isOnlineConfigured || useProfileStore.getState().name) return;
+    const id = setTimeout(() => {
+      namePromptShown = true;
+      setAskName(true);
+    }, 400);
+    return () => clearTimeout(id);
+  }, []);
   const masterUnlocked = useProfileStore((s) => s.masterUnlocked);
   const masterProgress = useProfileStore((s) => s.masterProgress);
   const refreshMaster = useProfileStore((s) => s.refreshMaster);
@@ -154,7 +168,7 @@ function MasterCard({
   const top = progress?.top ?? 100;
 
   const explain = () =>
-    Alert.alert(
+    showInfo(
       '🔒 Chế độ Bậc thầy',
       `Mở khóa khi bạn lọt TOP ${top} ở ít nhất 1 màn ${DIFFICULTY_LABEL.expert} bất kỳ.\n\n` +
         'Hãy giải thật nhanh một màn Chuyên gia để lên bảng xếp hạng!\n\n' +

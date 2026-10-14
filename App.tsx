@@ -84,13 +84,16 @@ function Root() {
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: t.bg }]}>
       <StatusBar style={t.dark ? 'light' : 'dark'} />
-      {ready ? (
-        screen
-      ) : (
-        <View style={styles.center}>
-          <ActivityIndicator color={t.primary} />
-        </View>
-      )}
+      {/* Giới hạn bề ngang để chơi trên máy tính (web) / máy tính bảng không bị kéo giãn */}
+      <View style={styles.frame}>
+        {ready ? (
+          screen
+        ) : (
+          <View style={styles.center}>
+            <ActivityIndicator color={t.primary} />
+          </View>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -105,5 +108,6 @@ export default function App() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  frame: { flex: 1, width: '100%', maxWidth: 640, alignSelf: 'center' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

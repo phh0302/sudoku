@@ -24,11 +24,19 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "output": "single",
+      "name": "Sudoku",
+      "shortName": "Sudoku",
+      "themeColor": "#3B6FE0",
+      "backgroundColor": "#F4F6FB"
     },
     "plugins": [
       "expo-status-bar",
       "expo-audio"
-    ]
+    ],
+    "experiments": {
+      "baseUrl": "/sudoku"
+    }
   }
 }
