@@ -4,6 +4,7 @@ import { ActivityIndicator, BackHandler, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { initAds } from './src/ads/rewarded';
+import { MockAdModal } from './src/components/MockAdModal';
 import { GameScreen } from './src/screens/GameScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
@@ -100,6 +101,7 @@ function Root() {
           </View>
         )}
       </View>
+      <MockAdModal />
     </SafeAreaView>
   );
 }

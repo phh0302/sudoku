@@ -3,12 +3,14 @@
  *
  * - Đang phát triển (__DEV__) hoặc chưa khai báo mã thật → luôn dùng QUẢNG CÁO THỬ của Google (TestIds).
  * - Mã thật đặt trong .env: EXPO_PUBLIC_ADMOB_REWARDED_ANDROID / EXPO_PUBLIC_ADMOB_REWARDED_IOS (xem ADS.md).
- * - Expo Go không có module AdMob → tự tắt (nút xem quảng cáo bị ẩn), không làm crash app.
+ * - Expo Go không có module AdMob → dùng QUẢNG CÁO GIẢ LẬP (mockAd.ts) để thử luồng nhận thưởng.
  * - Chỉ xin quảng cáo KHÔNG cá nhân hóa → chưa cần hộp xin phép theo dõi (ATT) / GDPR.
  */
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import type * as AdsLib from 'react-native-google-mobile-ads';
+
+import { requestMockAd } from './mockAd';
 
 type Ads = typeof AdsLib;
 
@@ -48,13 +50,14 @@ export function initAds(): void {
 }
 
 /** Thiết bị này có xem được quảng cáo có thưởng không. */
-export const isRewardedSupported = (): boolean => ads() !== null;
+export const isRewardedSupported = (): boolean => IN_EXPO_GO || ads() !== null;
 
 /**
  * Tải và hiện 1 quảng cáo có thưởng.
  * Trả về true nếu người chơi xem đủ để nhận thưởng, false nếu đóng sớm / lỗi / không có quảng cáo.
  */
 export function showRewardedAd(): Promise<boolean> {
+  if (IN_EXPO_GO) return requestMockAd();
   const m = ads();
   if (!m) return Promise.resolve(false);
   initAds();

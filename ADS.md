@@ -11,8 +11,13 @@
 Đang dùng mã thử của Google (`TestIds.REWARDED`, App ID thử trong `app.json`).
 Quảng cáo thử có chữ "Test Ad", bấm vào thoải mái, không bị khóa tài khoản.
 
-## Chạy thử trên điện thoại
-Expo Go **không** chạy được quảng cáo (nút sẽ tự ẩn). Cần bản *development build*:
+## Thử nhanh trong Expo Go (quảng cáo giả lập)
+Expo Go không có thư viện AdMob, nên ở đó game dùng **quảng cáo giả lập**: màn hình đếm ngược 5 giây,
+đóng sớm thì không được thưởng, xem đủ thì +1 gợi ý. Dùng để thử luồng chơi, không cần build.
+(Code: `src/ads/mockAd.ts`, `src/components/MockAdModal.tsx` – chỉ bật trong Expo Go.)
+
+## Xem quảng cáo AdMob thật (quảng cáo thử của Google)
+Cần bản *development build*:
 
 1. Nhấp đúp `_install_ads.bat` (cài `react-native-google-mobile-ads`, `expo-dev-client`, rồi tự kiểm tra – chỉ cần chạy 1 lần).
 2. `npm i -g eas-cli` rồi `eas login`.
